@@ -6,11 +6,17 @@ Includes error messages for any unmatched times.
 Examples: 
 
   TIME IN   |   TIME OUT
+  -----     |   ------
 startShift  |  endShift
+  -----     |   ------
+blank       |  blank
   -----     |   ------
 
 or 
 
   TIME IN   |   TIME OUT
+  -----     |   ------
 startShift  |  startBreak
+  -----     |   ------
 endBreak    |  endShift
+  -----     |   ------

@@ -1,0 +1,44 @@
+body {
+    background-color: rgb(30, 30, 30);
+    color: lightgray;
+    font-family: Arial, Helvetica, sans-serif;
+    padding-bottom: 30px;
+}
+
+.container-main {
+    text-align: center;
+    letter-spacing: 2px;
+}
+
+.container-main h1 {
+    text-decoration: underline;
+}
+
+.error-messages {
+    width: 90%;
+    margin: auto;
+    padding: 10px 5px;
+    border-radius: 10px;
+    background-color: pink;
+    color: red;
+}
+
+.container-main table {
+    width: 80%;
+    margin: auto;
+    margin-bottom: 30px;
+}
+
+label {
+    display: inline-block;
+    min-width: 100px;
+}
+
+.day {
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+button {
+    font-size: 18px;
+}

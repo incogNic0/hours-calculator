@@ -17,10 +17,6 @@ body {
 .error-messages {
     width: 90%;
     margin: auto;
-    padding: 10px 5px;
-    border-radius: 10px;
-    background-color: pink;
-    color: red;
 }
 
 .container-main table {
@@ -39,6 +35,18 @@ label {
     margin-bottom: 5px;
 }
 
+.missing-required {
+  border: 5px solid orangered;
+  border-radius: 5px;
+}
+
 button {
     font-size: 18px;
+}
+
+.show-errors {
+  padding: 10px 5px;
+  border-radius: 10px;
+  background-color: pink;
+  color: red;
 }

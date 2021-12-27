@@ -1,9 +1,8 @@
 const calcBtn = document.querySelector('.calc-btn');
-const shiftsIn = document.querySelectorAll('.shift-in')
-const shiftsOut = document.querySelectorAll('.shift-out');
-const breaksOut = document.querySelectorAll('.break-out');
-const breaksIn = document.querySelectorAll('.break-in');
+const timesIn = document.querySelectorAll('.time-in')
+const timesOut = document.querySelectorAll('.time-out');
 const hrsWorked = document.querySelectorAll('.hours-worked');
+
 
 window.addEventListener('keypress', evt => {
   if(evt.key === 'Enter') handleCalculate();
@@ -12,24 +11,18 @@ window.addEventListener('keypress', evt => {
 calcBtn.addEventListener('click', handleCalculate);
 
 function handleCalculate(evt) {
-  const shiftErrors = validInOut(shiftsIn, shiftsOut);
-  const breakErrors = validInOut(breaksIn, breaksOut);
+  clearErrs();
+  const inputErrs = validInOut(timesIn, timesOut);
 
-  if(shiftErrors.messages.length) {
-    notifyErrors(shiftErrors, 'shift');
-  }
-  if(breakErrors.messages.length) {
-    notifyErrors(breakErrors, 'break');
+  if(inputErrs.messages.length) {
+    notifyErrors(inputErrs);
   }
 
-  const convertedTIs = Array.from(shiftsIn)
-    .map(shiftIn => convertTime(shiftIn.value));
-  const convertedTOs = Array.from(shiftsOut)
-    .map(shiftOut => convertTime(shiftOut.value));
-  const convertedBOs = Array.from(breaksOut)
-    .map(breakOut => convertTime(breakOut.value))
-  const convertedBIs = Array.from(breaksIn)
-    .map(breakIn => convertTime(breakIn.value));
+  const convertedIns = Array.from(timesIn)
+    .map(inTime => convertTime(inTime.value));
+
+  const convertedOuts = Array.from(timesOut)
+    .map(outTime => convertTime(outTime.value));
 
 }
 
@@ -40,45 +33,63 @@ function convertTime(str) {
 }
 
 function validInOut(inTimes, outTimes) {
-  const errors = {
+  const days = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday'
+  ]
+  const errs = {
     inIndexs: [],
     outIndexs: [],
     messages: []
   }
-  if(inTimes.length !== outTimes.length) {
-    errors.messages.push('Unmatched in/out times');
-  }
+
   for(let i=0; i<inTimes.length; i++) {
-    if(inTimes[i] && !outTimes[i]) {
-      errors.messages.push('Time Out required for entered Time In');
+    const day = days[Math.floor(i / 2)];
+    if(inTimes[i].value && !outTimes[i].value) {
+      errs.outIndexs.push(i);
+      errs.messages.push(`'Time Out' missing for ${day}`);
     }
-    if(!inTimes[i] && outTimes[i]) {
-      errors.messages.push('Time In required for entered Time Out')
+    if(outTimes[i].value && !inTimes[i].value) {
+      errs.inIndexs.push(i);
+      errs.messages.push(`'Time In' missing for ${day}`);
     }
   }
-  return errors;
+
+  return errs;
 }
 
-function notifyErrors(errors, errType) {
-  if(errType === 'shift') {
-    errors.shifts.inIndexs
-      .forEach( i => shiftsIn[i].classList.add('missing-required'));
-    errors.shifts.outIndexs
-      .forEach( i => shiftsOut[i].classList.add('missing-required'));
-  }
-  if(errType === 'break') {
-    errors.breaks.inIndexs
-      .forEach( i => breaksIn[i].classList.add('missing-required'));
-    errors.breaks.outIndexs
-      .forEach( i => breaksOut[i].classList.add('missing-required'));
-  }
-  errors.messages.forEach(msg => showMsg(msg) )
+function notifyErrors(errs) {
+  errs.inIndexs
+    .forEach( i => timesIn[i].classList.add('missing-required'));
+  errs.outIndexs
+    .forEach( i => timesOut[i].classList.add('missing-required'));
+
+  errs.messages.forEach( msg => showErr(msg) )
 }
 
-function showMsg(msg) {
+function showErr(msg) {
   const errMsgs = document.querySelector('.error-messages');
   const node = document.createElement('P');
   const textNode = document.createTextNode(msg);
   node.appendChild(textNode)
   document.querySelector('.error-messages').appendChild(node);
+  errMsgs.classList.add('show-errors');
+}
+
+function clearErrs() {
+  const errMsgs = document.querySelector('.error-messages');
+  const missingInputs = document.querySelectorAll('.missing-required');
+  for(const elem of missingInputs) {
+    elem.classList.remove('missing-required');
+  }
+  while(errMsgs.firstChild) {
+    errMsgs.removeChild(errMsgs.firstChild);
+  }
+  errMsgs.classList.remove('show-errors')
+  window.scrollTo(0,0);
 }

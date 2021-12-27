@@ -9,14 +9,10 @@ Examples:
   -----     |   ------
 startShift  |  endShift
   -----     |   ------
-blank       |  blank
-  -----     |   ------
 
 or 
 
   TIME IN   |   TIME OUT
   -----     |   ------
 startShift  |  startBreak
-  -----     |   ------
 endBreak    |  endShift
-  -----     |   ------

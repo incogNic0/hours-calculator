@@ -12,18 +12,17 @@ calcBtn.addEventListener('click', handleCalculate);
 function handleCalculate(evt) {
   const timesIn = document.querySelectorAll('.time-in')
   const timesOut = document.querySelectorAll('.time-out');
-  const convertedIns = convertInputs(timesIn, 'in');
-  const convertedOuts = convertInputs(timesOut, 'out');
-  let totalHrs = 0;
+  const inTimes = convertInputs(timesIn, 'in');
+  const outTimes = convertInputs(timesOut, 'out');
 
   clearErrs();
-  const inputErrs = validInOut(convertedIns, convertedOuts);
+  const inputErrs = validInOut(inTimes, outTimes);
 
   if(inputErrs) {
     return notifyErrors(inputErrs);
   }
 
-  calculateHrs(convertedIns, convertedOuts);
+  calculateHrs(inTimes, outTimes);
 
 }
 
@@ -57,43 +56,42 @@ function validInOut(inTimes, outTimes) {
     outs: [],
     messages: []
   }
-  let isErrors;
 
   for(let i=0; i<14; i+=2) {
     const day = days[ i / 2 ];
 
-    if (inTimes[i] && !outTimes[i]) {
+    if (inTimes[i] >= 0 && outTimes[i] < 0) {
       errs.outs.push(i);
       errs.messages.push(`'Time Out' missing for ${day}`);
     }
-    if (inTimes[i+1] && !outTimes[i+1]) {
+    if (inTimes[i+1] >= 0 && outTimes[i+1] < 0) {
       errs.outs.push(i+1);
       errs.messages.push(`'Time Out' missing for ${day}`);
     }
  
-    if (outTimes[i] && !inTimes[i]) {
+    if (outTimes[i] >= 0 && inTimes[i] < 0) {
       errs.ins.push(i);
       errs.messages.push(`'Time In' missing for ${day}`);
     }
 
-    if (outTimes[i+1] && !inTimes[i+1]) {
+    if (outTimes[i+1] >= 0 && inTimes[i+1] < 0) {
       errs.ins.push(i+1);
       errs.messages.push(`'Time In' missing for ${day}`);
     } 
 
-    if( inTimes[i] && outTimes[i]) {
-      if(inTimes[i].hour > outTimes[i].hour) {
+    if(inTimes[i] >= 0 && outTimes[i] >= 0) {
+      if(inTimes[i] > outTimes[i]) {
         errs.outs.push(i);
         errs.messages.push(`Invalid 'Time Out' for ${day}`);
       }
     }
     
-    if(inTimes[i+1] && outTimes[i+1]) {
-      if (inTimes[i+1].hour < outTimes[i].hour) {
+    if(inTimes[i+1] >= 0 && outTimes[i+1] >= 0) {
+      if (inTimes[i+1] < outTimes[i]) {
         errs.ins.push(i+1);
         errs.messages.push(`Invalid 'Time In' for ${day}`);
       }
-      if(inTimes[i+1].hour > outTimes[i+1].hour) {
+      if(inTimes[i+1] > outTimes[i+1]) {
         errs.outs.push(i+1);
         errs.messages.push(`Invalid 'Time Out' for ${day}`);
       }
@@ -131,15 +129,14 @@ function convertInputs(timeInputs, timeType = 'in') {
   const plusDays = document.querySelectorAll('.plus-day-checkbox');
   const output = [];
   for (let i=0; i<14; i+=2) {
-    const addHrs = plusDays[i / 2].checked;
-    // first time in/out input of day
+    const addDay = plusDays[i / 2].checked;
     // don't include +1 day for the first time-in of each day
     const time0 = timeType === 'in' ? 
-      convertTime(timeInputs[i].value, false) :
-      convertTime(timeInputs[i].value, addHrs);
+      convertToMins(timeInputs[i].value, false) :
+      convertToMins(timeInputs[i].value, addDay);
 
     // second time in/out input of day
-    const time1 = convertTime(timeInputs[i+1].value, addHrs);
+    const time1 = convertToMins(timeInputs[i+1].value, addDay);
     output.push(time0);
     output.push(time1);
   }
@@ -148,18 +145,17 @@ function convertInputs(timeInputs, timeType = 'in') {
 
 
 // CONVERT TIME INPUT STRINGS TO NUMBERS
-function convertTime(str, plusDay = false) {
-  // Add additional hours if +1 day is checked
-  const addHrs = plusDay ? 24 : 0;
-  let output;
+function convertToMins(str, plusDay = false) {
+  // Add additional minutes if +1 day is checked
+  const additionalMins = plusDay ? 1440 : 0; // 1440mins === 24hr
+  let minutes = -1;
 
   if(str) {
     const splitStr = str.split(':');
-    output = {};
-    output.hour = Number(splitStr[0]) + addHrs;
-    output.minutes = Number(splitStr[1]);
+    minutes = Math.floor(Number(splitStr[0]) * 60 + additionalMins);
+    minutes += Number(splitStr[1]);
   }
-  return ( output ? output : null);
+  return minutes;
 }
 
 
@@ -169,10 +165,10 @@ function calculateHrs(inTimes, outTimes) {
   for (let i=0; i<14; i+=2) {
     let totalDay = 0
     if(inTimes[i])
-      totalDay = calcTimeWorked(inTimes[i], outTimes[i])
+      totalDay += outTimes[i] - inTimes[i];
 
     if(inTimes[i+1])
-      totalDay += calcTimeWorked(inTimes[i+1], outTimes[i+1]);
+      totalDay += outTimes[i+1] - inTimes[i+1]
 
     if (totalDay > 0) {
       const totalHrs = Math.floor(totalDay / 60);
@@ -197,11 +193,3 @@ function calcTimeWorked(inTime, outTime) {
   return minutesOut - minutesIn;
 }
 
-const foo = {
-  hour: 8,
-  minutes: 50
-}
-const barr = {
-  hour: 10,
-  minutes: 10
-}

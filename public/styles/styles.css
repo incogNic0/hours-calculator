@@ -30,10 +30,6 @@ label {
 	min-width: 100px;
 }
 
-input {
-	font-size: 16px;
-}
-
 .day {
 	font-size: 20px;
 	margin: 0;
@@ -46,9 +42,12 @@ input {
 	border-radius: 4px;
 }
 
-button {
+.calc-btn {
 	margin-top: 20px;
 	font-size: 18px;
+  padding: 5px 30px;
+  border-radius: 10px;
+  border: 1px solid black
 }
 
 .plus-day {
@@ -60,6 +59,12 @@ button {
 
 .plus-day input {
 	margin-right: 10px;
+}
+
+.time-input {
+  font-size: 16px;
+  border: 1px solid black;
+  border-radius: 4px;
 }
 
 .show-errors {

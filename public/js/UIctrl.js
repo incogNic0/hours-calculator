@@ -89,6 +89,7 @@ const UIctrl = (function() {
   
     const timeInput = document.createElement('input');
     timeInput.type = 'time';
+    timeInput.classList.add('time-input');
     timeInput.setAttribute(`data-${timeEvt}`, day);
   
     tData.appendChild(timeInput);
@@ -158,18 +159,7 @@ const UIctrl = (function() {
     }
   }
 
-    // DISPLAY TOTAL TIME
-  function displayTotal(totalMins, day) {
-    const hours = Math.floor(totalMins / 60);
-    const minutes = totalMins % 60;
-
-    const currentDay = day || 'week';
-    const timeDisplay = document.querySelector(`#total-time-${currentDay}`);
-
-    timeDisplay.textContent = `${hours}h${minutes}m`;
-  }
-
-    // ------------ DISPLAY ERRORS | START -------------
+  // ------------ DISPLAY ERRORS | START -------------
 
   // CLEAR ALL ERROR NOTIFICATIONS
   function clearErrs() {
@@ -185,7 +175,6 @@ const UIctrl = (function() {
     window.scrollTo(0,0);
   }
 
-
   // HIGHLIGHT INVALID/MISSING INPUTS
   function displayErrors(errs) {
     // All errors for the day
@@ -197,7 +186,6 @@ const UIctrl = (function() {
     }
   }
 
-
   // DISPLAY ERROR MESSAGES
   function showErr(msg) {
     const errMsgs = document.querySelector('.error-messages');
@@ -208,5 +196,17 @@ const UIctrl = (function() {
     errMsgs.classList.add('show-errors');
   }
   // ----------- DISPLAY ERRORS | END ---------------------
+
+  // DISPLAY TOTAL TIME
+  function displayTotal(totalMins, day) {
+    const hours = Math.floor(totalMins / 60);
+    const minutes = totalMins % 60;
+
+    const currentDay = day || 'week';
+    const timeDisplay = document.querySelector(`#total-time-${currentDay}`);
+
+    timeDisplay.textContent = `${hours}h${minutes}m`;
+  }
+
   return { loadMainContent, displayTotal, clearErrs, displayErrors };
 })();

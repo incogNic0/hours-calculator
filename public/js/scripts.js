@@ -1,4 +1,4 @@
-const calcBtn = document.querySelector('.calc-btn');
+const calcBtns = Array.from(document.querySelectorAll('.calc-btn'));
 
 UIctrl.loadMainContent();
 
@@ -6,7 +6,9 @@ window.addEventListener('keypress', evt => {
   if(evt.key === 'Enter') handleCalculate();
 });
 
-calcBtn.addEventListener('click', handleCalculate);
+calcBtns.forEach( btn => {
+  btn.addEventListener('click', handleCalculate);
+})
 
 function handleCalculate(evt) {
   const days = [

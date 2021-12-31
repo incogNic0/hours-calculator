@@ -1,8 +1,5 @@
 const calcBtn = document.querySelector('.calc-btn');
 
-const hrsWorked = document.querySelectorAll('.hours-worked');
-
-
 window.addEventListener('keypress', evt => {
   if(evt.key === 'Enter') handleCalculate();
 });
@@ -10,21 +7,156 @@ window.addEventListener('keypress', evt => {
 calcBtn.addEventListener('click', handleCalculate);
 
 function handleCalculate(evt) {
-  const timesIn = document.querySelectorAll('.time-in')
-  const timesOut = document.querySelectorAll('.time-out');
-  const inTimes = convertInputs(timesIn, 'in');
-  const outTimes = convertInputs(timesOut, 'out');
+  const days = [
+    'sunday',
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday'
+  ];
+  let totalMinsWeek = 0
 
+  // Clear any proir error notifications
   clearErrs();
-  const inputErrs = validInOut(inTimes, outTimes);
 
-  if(inputErrs) {
-    return notifyErrors(inputErrs);
+  for (const day of days) {
+    const plusDay = document.querySelector(`#checkbox-${day}`).checked;
+    let timeValues = getInputValues(day);
+
+    if(plusDay) timeValues = adjustTimes(timeValues);
+
+    const errs = validateData(timeValues, day);
+    if(errs) return displayErrors(errs);
+
+    const totalMinsDay = calculateHrs(timeValues);
+
+    if (totalMinsDay > 0) displayTotal(totalMinsDay, day);
+
+    totalMinsWeek += totalMinsDay
   }
 
-  calculateHrs(inTimes, outTimes);
-
+  if(totalMinsWeek > 0) displayTotal(totalMinsWeek);
 }
+
+//------- GET, CONVERT, & VALIDATE INPUTS | START--------
+
+// GET TIMES
+function getInputValues(day) {
+  const timesIn = document.querySelectorAll(`[data-time-in=${day}]`);
+  const timesOut = document.querySelectorAll(`[data-time-out=${day}]`);
+  const timeValues = {
+    in: [],
+    out: []
+  }
+
+  timeValues.in = Array.from(timesIn)
+    .map( input => convertTimeValue(input.value));
+
+  timeValues.out = Array.from(timesOut)
+    .map( input => convertTimeValue(input.value));
+
+  return timeValues;
+}
+
+// CONVERT TIME STRING TO NUMBER
+function convertTimeValue(val) {
+  if(!val) return null; // no time entered
+  const valArr = val.split(':');
+  const hours = Number(valArr[0]);
+  const minutes = Number(valArr[1]);
+
+  // Total minutes into the day
+  return hours * 60 + minutes;
+}
+
+// CHECK FOR MISSING TIME INPUTS
+function validateData(vals, day) {
+  class InputError {
+    constructor(msg, event, index) {
+      this.message = msg,
+      this.event = event,
+      this.index = index
+    }
+  }
+  const capDay = day[0].toUpperCase() + day.slice(1);
+
+  const errs = {
+    day,
+    details: []
+  }
+  const missingIn = `Missing 'Time In' for ${capDay}`
+  const missingOut = `Missing 'Time Out' for ${capDay}`
+  const invalidIn = `Invalid 'Time In' for ${capDay}`;
+  const invalidOut = `Invalid 'Time Out' for ${capDay}`;
+
+  const firstIn = vals.in[0];
+  const firstOut = vals.out[0];
+  const secondIn = vals.in[1];
+  const secondOut = vals.out[1];
+ 
+  if (firstIn === null && firstOut !== null)
+    errs.details.push(new InputError(missingIn, 'time-in', 0));
+
+  if (secondIn === null && secondOut !== null)
+    errs.details.push(new InputError(missingIn, 'time-in', 1));
+
+  if (firstOut === null && firstIn !== null)
+    errs.details.push(new InputError(missingOut, 'time-out', 0));
+
+  if (secondOut === null && secondIn !== null)
+    errs.details.push(new InputError(missingOut, 'time-out', 1));
+
+  if (firstOut !== null && firstOut < firstIn )
+    errs.details.push(new InputError(invalidOut, 'time-out', 0));
+  
+  if (secondIn !== null && secondIn < firstOut)
+    errs.details.push(new InputError(invalidIn, 'time-in', 1));
+  
+  if (secondOut !== null && secondOut < secondIn)
+    errs.details.push(new InputError(invalidOut, 'time-out', 1));
+
+  return errs.details.length ? errs : null;
+}
+
+// ADJUST TIMES THAT CARRY INTO NEXT DAY
+function adjustTimes(times) {
+  const addMins = 1440 // num minutes in 24 hours
+  const firstIn = times.in[0];
+  const firstOut = times.out[0];
+  const secondIn = times.in[1];
+  const secondOut = times.out[1];
+
+  const adjusted = {
+    in: [...times.in],
+    out: [...times.out]
+  }
+
+  if(firstOut !== null && firstOut < firstIn) {
+    // Change firstOut, secondIn, secondOut
+    adjusted.out[0] += addMins;
+    adjusted.in[1] = secondIn !== null ? secondIn + addMins : null;
+    adjusted.out[1] = secondOut !== null ? secondOut + addMins : null;
+
+  } else if (secondIn !==null && secondIn < firstOut) {
+    // Ajust secondIn and secondOut
+    adjusted.in[1] += addMins;
+    adjusted.out[1] = secondOut !==null ? secondOut + addMins : null;
+
+  } else if (secondOut !==null && secondOut < secondIn) {
+    // Adjust secondOut only
+    adjusted.out[1] += addMins;
+
+  } else {};
+
+  return adjusted;
+}
+// ----------- GET, CONVERT, & VALIDATE INPUTS | END ---------
+
+
+
+// ------------ DISPLAY ERRORS | START -------------
 
 // CLEAR ALL ERROR NOTIFICATIONS
 function clearErrs() {
@@ -40,78 +172,18 @@ function clearErrs() {
   window.scrollTo(0,0);
 }
 
-// VALIDATE TIME INPUTS
-function validInOut(inTimes, outTimes) {
-  const days = [
-    'Sunday',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday'
-  ]
-  const errs = {
-    ins: [],
-    outs: [],
-    messages: []
-  }
-
-  for(let i=0; i<14; i+=2) {
-    const day = days[ i / 2 ];
-
-    if (inTimes[i] >= 0 && outTimes[i] < 0) {
-      errs.outs.push(i);
-      errs.messages.push(`'Time Out' missing for ${day}`);
-    }
-    if (inTimes[i+1] >= 0 && outTimes[i+1] < 0) {
-      errs.outs.push(i+1);
-      errs.messages.push(`'Time Out' missing for ${day}`);
-    }
- 
-    if (outTimes[i] >= 0 && inTimes[i] < 0) {
-      errs.ins.push(i);
-      errs.messages.push(`'Time In' missing for ${day}`);
-    }
-
-    if (outTimes[i+1] >= 0 && inTimes[i+1] < 0) {
-      errs.ins.push(i+1);
-      errs.messages.push(`'Time In' missing for ${day}`);
-    } 
-
-    if(inTimes[i] >= 0 && outTimes[i] >= 0) {
-      if(inTimes[i] > outTimes[i]) {
-        errs.outs.push(i);
-        errs.messages.push(`Invalid 'Time Out' for ${day}`);
-      }
-    }
-    
-    if(inTimes[i+1] >= 0 && outTimes[i+1] >= 0) {
-      if (inTimes[i+1] < outTimes[i]) {
-        errs.ins.push(i+1);
-        errs.messages.push(`Invalid 'Time In' for ${day}`);
-      }
-      if(inTimes[i+1] > outTimes[i+1]) {
-        errs.outs.push(i+1);
-        errs.messages.push(`Invalid 'Time Out' for ${day}`);
-      }
-    }
-  }
-
-  return errs.messages.length ? errs : false;
-}
 
 // HIGHLIGHT INVALID/MISSING INPUTS
-function notifyErrors(errs) {
-  const timesIn = document.querySelectorAll('.time-in');
-  const timesOut = document.querySelectorAll('.time-out'); 
-  errs.ins
-    .forEach( i => timesIn[i].classList.add('missing-invalid'));
-  errs.outs
-    .forEach( i => timesOut[i].classList.add('missing-invalid'));
+function displayErrors(errs) {
+  // All errors for the day
+  for(const err of errs.details) {
+    const inputs = document.querySelectorAll(`[data-${err.event}=${errs.day}]`);
+    inputs[err.index].classList.add('missing-invalid');
 
-  errs.messages.forEach( msg => showErr(msg) )
+    showErr(err.message);
+  }
 }
+
 
 // DISPLAY ERROR MESSAGES
 function showErr(msg) {
@@ -122,74 +194,26 @@ function showErr(msg) {
   document.querySelector('.error-messages').appendChild(node);
   errMsgs.classList.add('show-errors');
 }
+// ----------- DISPLAY ERRORS | END ---------------------
 
-
-// CONVERT TIME INPUTS
-function convertInputs(timeInputs, timeType = 'in') {
-  const plusDays = document.querySelectorAll('.plus-day-checkbox');
-  const output = [];
-  for (let i=0; i<14; i+=2) {
-    const addDay = plusDays[i / 2].checked;
-    // don't include +1 day for the first time-in of each day
-    const time0 = timeType === 'in' ? 
-      convertToMins(timeInputs[i].value, false) :
-      convertToMins(timeInputs[i].value, addDay);
-
-    // second time in/out input of day
-    const time1 = convertToMins(timeInputs[i+1].value, addDay);
-    output.push(time0);
-    output.push(time1);
-  }
-  return output;
-}
-
-
-// CONVERT TIME INPUT STRINGS TO NUMBERS
-function convertToMins(str, plusDay = false) {
-  // Add additional minutes if +1 day is checked
-  const additionalMins = plusDay ? 1440 : 0; // 1440mins === 24hr
-  let minutes = -1;
-
-  if(str) {
-    const splitStr = str.split(':');
-    minutes = Math.floor(Number(splitStr[0]) * 60 + additionalMins);
-    minutes += Number(splitStr[1]);
-  }
-  return minutes;
-}
 
 
 // CALCULATE HOURS WORKED
-function calculateHrs(inTimes, outTimes) {
-  let totalWeek = 0
-  for (let i=0; i<14; i+=2) {
-    let totalDay = 0
-    if(inTimes[i])
-      totalDay += outTimes[i] - inTimes[i];
+function calculateHrs(vals) {
+  let totalDay = 0;
+  totalDay += vals.out[0] - vals.in[0];
+  totalDay += vals.out[1] - vals.in[1];
 
-    if(inTimes[i+1])
-      totalDay += outTimes[i+1] - inTimes[i+1]
-
-    if (totalDay > 0) {
-      const totalHrs = Math.floor(totalDay / 60);
-      const totalMins = totalDay % 60;
-      document.querySelectorAll('.hours-worked')[i / 2].textContent = 
-      `${totalHrs}h${totalMins}m`
-    }
-    totalWeek += totalDay;
-  }
-  if (totalWeek > 0) {
-    const totalHrs = Math.floor(totalWeek / 60);
-    const totalMins = totalWeek % 60;
-    document.querySelector('.total-hours').textContent = 
-    `${totalHrs}h${totalMins}m`
-  }
+  return totalDay;
 }
 
-function calcTimeWorked(inTime, outTime) {
-  const minutesIn = inTime.hour * 60 + inTime.minutes;
-  const minutesOut = outTime.hour * 60 + outTime.minutes;
+// DISPLAY TOTAL TIME
+function displayTotal(totalMins, day) {
+  const hours = Math.floor(totalMins / 60);
+  const minutes = totalMins % 60;
 
-  return minutesOut - minutesIn;
+  const currentDay = day || 'week';
+  const timeDisplay = document.querySelector(`#total-time-${currentDay}`);
+
+  timeDisplay.textContent = `${hours}h${minutes}m`;
 }
-

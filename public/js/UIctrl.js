@@ -1,4 +1,4 @@
-(function() {
+const UIctrl = (function() {
   const mainContent = document.getElementById('main-content');
   const days = [
     'sunday',
@@ -151,8 +151,62 @@
   }
   
   // CREATE MAIN CONTENT
-  for (const day of days) {
-    const dayContent = createDayContent(day);
-    mainContent.appendChild(dayContent);
+  function loadMainContent() {
+    for (const day of days) {
+      const dayContent = createDayContent(day);
+      mainContent.appendChild(dayContent);
+    }
   }
+
+    // DISPLAY TOTAL TIME
+  function displayTotal(totalMins, day) {
+    const hours = Math.floor(totalMins / 60);
+    const minutes = totalMins % 60;
+
+    const currentDay = day || 'week';
+    const timeDisplay = document.querySelector(`#total-time-${currentDay}`);
+
+    timeDisplay.textContent = `${hours}h${minutes}m`;
+  }
+
+    // ------------ DISPLAY ERRORS | START -------------
+
+  // CLEAR ALL ERROR NOTIFICATIONS
+  function clearErrs() {
+    const errMsgs = document.querySelector('.error-messages');
+    const missingInputs = document.querySelectorAll('.missing-invalid');
+    for(const elem of missingInputs) {
+      elem.classList.remove('missing-invalid');
+    }
+    while(errMsgs.firstChild) {
+      errMsgs.removeChild(errMsgs.firstChild);
+    }
+    errMsgs.classList.remove('show-errors')
+    window.scrollTo(0,0);
+  }
+
+
+  // HIGHLIGHT INVALID/MISSING INPUTS
+  function displayErrors(errs) {
+    // All errors for the day
+    for(const err of errs.details) {
+      const inputs = document.querySelectorAll(`[data-${err.event}=${errs.day}]`);
+      inputs[err.index].classList.add('missing-invalid');
+
+      showErr(err.message);
+    }
+  }
+
+
+  // DISPLAY ERROR MESSAGES
+  function showErr(msg) {
+    const errMsgs = document.querySelector('.error-messages');
+    const node = document.createElement('P');
+    const textNode = document.createTextNode(msg);
+    node.appendChild(textNode)
+    document.querySelector('.error-messages').appendChild(node);
+    errMsgs.classList.add('show-errors');
+  }
+  // ----------- DISPLAY ERRORS | END ---------------------
+  return { loadMainContent, displayTotal, clearErrs, displayErrors };
 })();
